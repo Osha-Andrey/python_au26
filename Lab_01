@@ -92,7 +92,6 @@ def main(path: str) -> None:
     
         f.close()
         
-        
         print("\n---")
         
         print("Файл:", filename)
