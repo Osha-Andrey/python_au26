@@ -1,0 +1,109 @@
+import sys
+import math
+import glob
+
+def main(path: str) -> None:
+    # TODO: прочитать лог, посчитать урон, напечатать строки вида
+    # "Игрок <Имя> из гильдии <Тег> нанес <Урон> по воротам."
+    
+    files = glob.glob("*.txt")
+
+    for filename in files:
+
+        count_ok = 0
+        count_skipped = 0
+    
+        f = open(filename, "r")
+    
+        for line in f:
+    
+            line = line.strip()
+    
+            if line == "" or line.startswith("#"):
+                count_skipped += 1
+                continue
+    
+            parts = line.split("|")
+    
+            if len(parts) < 3:
+                count_skipped += 1
+                continue
+    
+            name_part = parts[0].strip()
+            damage_part = parts[1].strip()
+            state_part = parts[2].strip()
+    
+            if len(parts) >= 4:
+                buff_part = parts[3].strip()
+            else:
+                buff_part = ""
+    
+            if name_part.startswith("[") and "]" in name_part:
+                end_of_tag = name_part.index("]")
+                tag = name_part[1:end_of_tag]
+                name = name_part[end_of_tag + 1:].strip()
+            else:
+                tag = "Без гильдии"
+                name = name_part
+    
+            if tag == "":
+                tag = "Без гильдии"
+    
+            if name == "":
+                count_skipped += 1
+                continue
+    
+            damage_part = damage_part.replace(",", ".")
+    
+            try:
+                damage = float(damage_part)
+            except ValueError:
+                count_skipped += 1
+                continue
+    
+            if damage < 0 or not math.isfinite(damage):
+                count_skipped += 1
+                continue
+    
+            state = state_part.lower()
+            if state == "active":
+                multiplier = 1.5
+            elif state == "broken":
+                multiplier = 0.5
+            else:
+                count_skipped += 1
+                continue
+    
+            if buff_part == "" or buff_part.upper() == "N/A":
+                buffs = 0
+            else:
+                try:
+                    buffs = float(buff_part)
+                except ValueError:
+                    buffs = 0
+                if buffs < 0:
+                    buffs = 0
+    
+            total_damage = damage * multiplier * (1 + 0.15 * buffs)
+            total_damage = round(total_damage, 2)
+    
+            print(f"Игрок {name} из гильдии {tag} нанес {total_damage:.2f} по воротам.")
+            count_ok += 1
+    
+        f.close()
+        
+        
+        print("\n---")
+        
+        print("Файл:", filename)
+
+        if count_ok == 0:
+            print("Логов нет")
+        else:
+            print("Успешно обработано строк:", count_ok)
+            print("Пропущено строк:", count_skipped)
+            print()
+
+
+if __name__ == "__main__":
+    main(sys.argv[1] if len(sys.argv) > 1 else "siege_log.txt")
